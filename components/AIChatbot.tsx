@@ -8,7 +8,7 @@ const AIChatbot: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'model',
-      text: `Merhaba! Ben ${siteData.general.brandNameHighlight} dijital asistanıyım. Düğün çekimi, emlak tanıtımı veya özel projeleriniz hakkında size nasıl yardımcı olabilirim?`,
+      text: `Merhaba! Ben Drone Çekimi Nevşehir dijital asistanıyım. Düğün çekimi, emlak tanıtımı veya özel projeleriniz hakkında size nasıl yardımcı olabilirim?`,
       timestamp: new Date()
     }
   ]);
