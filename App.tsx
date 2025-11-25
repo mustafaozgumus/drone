@@ -3,7 +3,7 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import Services from './components/Services';
 import Gallery from './components/Gallery';
-import AIPlanner from './components/AIPlanner';
+import AIChatbot from './components/AIChatbot';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 
@@ -14,7 +14,7 @@ const App: React.FC = () => {
       <main>
         <Hero />
         <Services />
-        <AIPlanner />
+        <AIChatbot />
         <Gallery />
         <Contact />
       </main>

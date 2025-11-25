@@ -14,6 +14,12 @@ export interface GalleryItem {
   category: string;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
+  timestamp: Date;
+}
+
 export interface AIPlanningResponse {
   suggestion: string;
   technicalTips: string;

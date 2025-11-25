@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Plane } from 'lucide-react';
+import { siteData } from '../data';
 
 const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -16,7 +17,7 @@ const Header: React.FC = () => {
   const navLinks = [
     { name: 'Ana Sayfa', href: '#hero' },
     { name: 'Hizmetler', href: '#services' },
-    { name: 'AI Planlayıcı', href: '#ai-planner' },
+    { name: 'AI Asistan', href: '#ai-assistant' },
     { name: 'Galeri', href: '#gallery' },
     { name: 'İletişim', href: '#contact' },
   ];
@@ -35,7 +36,7 @@ const Header: React.FC = () => {
           </div>
           <div className="flex flex-col leading-none">
             <span className="font-display font-black text-lg md:text-xl text-white tracking-tighter">
-              DRONE ÇEKİMİ <span className="text-brand-500">NEVŞEHİR</span>
+              {siteData.general.brandName} <span className="text-brand-500">{siteData.general.brandNameHighlight}</span>
             </span>
             <span className="text-[0.6rem] text-gray-400 tracking-[0.2em] uppercase">Profesyonel Hizmetler</span>
           </div>
