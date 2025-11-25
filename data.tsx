@@ -12,7 +12,7 @@ export const siteData = {
     heroSubtitle: "Sinematik drone çekimleriyle markanızın ve anılarınızın sınırlarını zorlayın.",
     heroVideoPoster: "https://picsum.photos/1920/1080?grayscale",
     // Arka plan videosu (Şu an placeholder var, kendi videonuzun linkini buraya koyun)
-    heroVideoUrl: "https://assets.mixkit.co/videos/preview/mixkit-flying-over-turkey-mountains-at-sunset-40865-large.mp4" 
+    heroVideoUrl: "https://youtu.be/jCUgWQqj9qU?si=K2skdLTsIB35OyMd$0" 
   },
   contact: {
     phone: "+90 538 084 1450",
