@@ -1,3 +1,4 @@
+
 export enum ServiceType {
   WEDDING = 'Düğün & Hikaye',
   REAL_ESTATE = 'Emlak & Arsa',
@@ -8,7 +9,7 @@ export enum ServiceType {
 }
 
 export interface GalleryItem {
-  id: number;
+  id: string;
   imageUrl: string;
   title: string;
   category: string;
