@@ -1,70 +1,81 @@
 
 import React, { useState, useEffect } from 'react';
 import { GalleryItem } from '../types';
+import { subscribeToGallery } from '../services/firebase';
+import { Loader2, ImageIcon } from 'lucide-react';
 
 const Gallery: React.FC = () => {
   const [images, setImages] = useState<GalleryItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadGallery = () => {
-      const saved = localStorage.getItem('drone_gallery');
-      if (saved) {
-        setImages(JSON.parse(saved));
-      } else {
-        // Fallback initial data
-        const initial = [
-          { id: '1', imageUrl: "https://picsum.photos/id/1015/800/1200", title: "Kapadokya Balonlar", category: "Dış Çekim" },
-          { id: '2', imageUrl: "https://picsum.photos/id/1036/800/600", title: "Peri Bacaları", category: "Turizm" },
-          { id: '3', imageUrl: "https://picsum.photos/id/16/800/800", title: "Doğa Yürüyüşü", category: "Prodüksiyon" },
-          { id: '4', imageUrl: "https://picsum.photos/id/1040/800/1000", title: "Ürgüp Kalesi", category: "Tanıtım" },
-          { id: '5', imageUrl: "https://picsum.photos/id/106/800/600", title: "Gün Batımı", category: "Etkinlik" },
-          { id: '6', imageUrl: "https://picsum.photos/id/1018/800/900", title: "Göl Manzarası", category: "Emlak" },
-        ];
-        setImages(initial);
-      }
-    };
+    // Firebase real-time subscription
+    const unsubscribe = subscribeToGallery((data) => {
+      setImages(data);
+      setLoading(false);
+    });
 
-    loadGallery();
-    // Listen for changes (in case of multi-tab or local updates)
-    window.addEventListener('storage', loadGallery);
-    return () => window.removeEventListener('storage', loadGallery);
+    return () => unsubscribe();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="py-40 flex flex-col items-center justify-center bg-dark-900">
+        <Loader2 className="w-12 h-12 text-brand-500 animate-spin mb-6" />
+        <p className="text-gray-500 text-[10px] font-black tracking-[0.4em] uppercase">Sinerji Yükleniyor</p>
+      </div>
+    );
+  }
 
   return (
     <section id="gallery" className="py-24 md:py-32 bg-dark-900 relative">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-12 md:mb-16 text-center md:text-left gap-4">
-          <div>
-            <h2 className="font-display text-4xl md:text-6xl font-bold text-white mb-4 uppercase tracking-tighter">
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-brand-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+      <div className="container mx-auto px-4 md:px-6 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 md:mb-24 text-center md:text-left gap-8">
+          <div className="animate-fade-in max-w-2xl">
+            <h2 className="font-display text-4xl md:text-8xl font-black text-white mb-6 uppercase tracking-tighter leading-[0.85]">
               SEÇİLMİŞ <span className="text-brand-500">İŞLER</span>
             </h2>
-            <p className="text-gray-400 max-w-md mx-auto md:mx-0">Kapadokya'nın eşsiz manzarasında gerçekleştirdiğimiz bazı projeler.</p>
+            <div className="h-1.5 w-24 bg-brand-500 mb-6 mx-auto md:mx-0"></div>
+            <p className="text-gray-400 text-lg md:text-xl font-medium leading-relaxed">
+              Kapadokya'nın masalsı dokusunu gökyüzünden yakaladığımız profesyonel prodüksiyonlarımız.
+            </p>
           </div>
-          <a href="#contact" className="hidden md:flex items-center space-x-2 text-white border border-white/20 px-6 py-3 rounded-full hover:bg-white hover:text-black transition-all font-medium text-sm tracking-wide">
-            <span>PROJENİZ İÇİN YAZIN</span>
+          <a href="#contact" className="group flex items-center gap-4 bg-white text-black px-10 py-5 rounded-2xl hover:bg-brand-500 hover:text-white transition-all font-black text-sm tracking-widest uppercase active:scale-95 shadow-2xl shadow-white/5">
+            <span>YENİ PROJE BAŞLAT</span>
           </a>
         </div>
 
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-8 space-y-4 md:space-y-8">
-          {images.map((img) => (
-            <div 
-              key={img.id} 
-              className="break-inside-avoid relative group overflow-hidden rounded-2xl cursor-zoom-in shadow-2xl"
-            >
-              <img 
-                src={img.imageUrl} 
-                alt={img.title} 
-                loading="lazy"
-                className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out filter brightness-75 group-hover:brightness-100"
-              />
-              
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-100 md:opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-6 md:p-8">
-                <span className="text-brand-500 text-[10px] font-bold tracking-[0.2em] uppercase mb-1">{img.category}</span>
-                <h3 className="text-white text-xl md:text-2xl font-bold font-display">{img.title}</h3>
+        {images.length === 0 ? (
+          <div className="text-center py-32 border border-dashed border-white/10 rounded-[3rem] animate-pulse">
+             <ImageIcon className="w-16 h-16 text-gray-800 mx-auto mb-4" />
+             <p className="text-gray-600 font-black uppercase tracking-widest text-xs">Henüz sergilenecek iş bulunmuyor.</p>
+          </div>
+        ) : (
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 md:gap-12 space-y-6 md:space-y-12 animate-fade-in">
+            {images.map((img) => (
+              <div 
+                key={img.id} 
+                className="break-inside-avoid relative group overflow-hidden rounded-[2.5rem] cursor-zoom-in shadow-2xl border border-white/5 bg-dark-800/50 backdrop-blur-sm"
+              >
+                <img 
+                  src={img.imageUrl} 
+                  alt={img.title} 
+                  loading="lazy"
+                  className="w-full h-auto object-cover transform group-hover:scale-110 transition-transform duration-[1.5s] ease-out filter brightness-75 group-hover:brightness-100"
+                />
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 flex flex-col justify-end p-8 md:p-12 translate-y-8 group-hover:translate-y-0">
+                  <span className="text-brand-500 text-[10px] font-black tracking-[0.4em] uppercase mb-3">{img.category}</span>
+                  <h3 className="text-white text-2xl md:text-4xl font-black font-display tracking-tighter leading-tight">{img.title}</h3>
+                  <div className="w-0 h-1 bg-brand-500 mt-6 group-hover:w-full transition-all duration-1000"></div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
