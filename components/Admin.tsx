@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Lock, LogOut, Plus, Trash2, Image as ImageIcon, CheckCircle, ArrowLeft, Save, Loader2, Globe, RefreshCcw, AlertTriangle } from 'lucide-react';
+import { Lock, LogOut, Plus, Trash2, Image as ImageIcon, CheckCircle, ArrowLeft, Save, Loader2, Globe, RefreshCcw, AlertTriangle, Edit2, X } from 'lucide-react';
 import { GalleryItem } from '../types';
 import { fetchGallery, updateFullGallery } from '../services/firebase';
 import { siteData } from '../data';
@@ -9,7 +9,8 @@ const Admin: React.FC<{ onExit: () => void }> = ({ onExit }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [items, setItems] = useState<GalleryItem[]>([]);
-  const [newItem, setNewItem] = useState({ imageUrl: '', title: '', category: 'Drone Çekimi' });
+  const [formItem, setFormItem] = useState({ imageUrl: '', title: '', category: 'Drone Çekimi' });
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
@@ -43,20 +44,49 @@ const Admin: React.FC<{ onExit: () => void }> = ({ onExit }) => {
     }
   };
 
-  const addToLocalList = (e: React.FormEvent) => {
+  const handleSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
-    const tempItem: GalleryItem = {
-      id: Date.now().toString(),
-      ...newItem
-    };
-    setItems([tempItem, ...items]);
-    setNewItem({ imageUrl: '', title: '', category: 'Drone Çekimi' });
+    
+    if (editingId) {
+      // Güncelleme modu
+      setItems(items.map(item => 
+        item.id === editingId ? { ...item, ...formItem } : item
+      ));
+      setEditingId(null);
+    } else {
+      // Ekleme modu
+      const tempItem: GalleryItem = {
+        id: Date.now().toString(),
+        ...formItem
+      };
+      setItems([tempItem, ...items]);
+    }
+    
+    setFormItem({ imageUrl: '', title: '', category: 'Drone Çekimi' });
     setHasChanges(true);
   };
 
+  const startEditing = (item: GalleryItem) => {
+    setEditingId(item.id);
+    setFormItem({
+      imageUrl: item.imageUrl,
+      title: item.title,
+      category: item.category || 'Drone Çekimi'
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setFormItem({ imageUrl: '', title: '', category: 'Drone Çekimi' });
+  };
+
   const removeFromLocalList = (id: string) => {
-    setItems(items.filter(i => i.id !== id));
-    setHasChanges(true);
+    if (window.confirm("Bu işi listeden kaldırmak istediğinize emin misiniz?")) {
+      setItems(items.filter(i => i.id !== id));
+      setHasChanges(true);
+      if (editingId === id) cancelEditing();
+    }
   };
 
   const handleFinalSave = async () => {
@@ -75,7 +105,7 @@ const Admin: React.FC<{ onExit: () => void }> = ({ onExit }) => {
   const importDefaults = () => {
     if(window.confirm("Sitedeki varsayılan fotoğrafları listeye eklemek istiyor musunuz? (Mevcut listenin üzerine eklenir)")) {
       const defaultItems: GalleryItem[] = siteData.gallery.map((g, idx) => ({
-        id: `default-${idx}`,
+        id: `default-${idx}-${Date.now()}`,
         imageUrl: g.src,
         title: g.title,
         category: "Kapadokya"
@@ -149,19 +179,28 @@ const Admin: React.FC<{ onExit: () => void }> = ({ onExit }) => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Add Form */}
+          {/* Form Side */}
           <div className="lg:col-span-4">
-            <div className="glass-strong p-8 rounded-[2rem] border border-white/10 sticky top-32 shadow-2xl">
-              <h2 className="text-xl font-black mb-8 flex items-center gap-3 tracking-tight uppercase">
-                <Plus className="text-brand-500" /> Listeye Yeni İş Ekle
-              </h2>
-              <form onSubmit={addToLocalList} className="space-y-6">
+            <div className={`glass-strong p-8 rounded-[2rem] border transition-all duration-500 sticky top-32 shadow-2xl ${editingId ? 'border-brand-500 bg-brand-500/5' : 'border-white/10'}`}>
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-xl font-black flex items-center gap-3 tracking-tight uppercase">
+                  {editingId ? <Edit2 className="text-brand-500" /> : <Plus className="text-brand-500" />} 
+                  {editingId ? 'İşi Düzenle' : 'Listeye Yeni İş Ekle'}
+                </h2>
+                {editingId && (
+                  <button onClick={cancelEditing} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-500 hover:text-white">
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+              
+              <form onSubmit={handleSubmitForm} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em] ml-1">Görsel Adresi (URL)</label>
                   <input 
                     required
-                    value={newItem.imageUrl}
-                    onChange={(e) => setNewItem({...newItem, imageUrl: e.target.value})}
+                    value={formItem.imageUrl}
+                    onChange={(e) => setFormItem({...formItem, imageUrl: e.target.value})}
                     placeholder="https://..."
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-sm focus:border-brand-500 outline-none transition-all"
                   />
@@ -170,22 +209,36 @@ const Admin: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                   <label className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em] ml-1">Çekim Başlığı</label>
                   <input 
                     required
-                    value={newItem.title}
-                    onChange={(e) => setNewItem({...newItem, title: e.target.value})}
+                    value={formItem.title}
+                    onChange={(e) => setFormItem({...formItem, title: e.target.value})}
                     placeholder="Örn: Kapadokya Düğün"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-sm focus:border-brand-500 outline-none transition-all"
                   />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em] ml-1">Kategori</label>
+                  <select 
+                    value={formItem.category}
+                    onChange={(e) => setFormItem({...formItem, category: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-sm focus:border-brand-500 outline-none transition-all appearance-none"
+                  >
+                    <option value="Drone Çekimi">Drone Çekimi</option>
+                    <option value="Düğün & Hikaye">Düğün & Hikaye</option>
+                    <option value="Emlak & Tanıtım">Emlak & Tanıtım</option>
+                    <option value="Kapadokya">Kapadokya</option>
+                  </select>
+                </div>
                 <button 
-                  className="w-full bg-white text-black font-black py-5 rounded-xl flex items-center justify-center gap-3 transition-all hover:bg-brand-500 hover:text-white active:scale-95"
+                  className={`w-full font-black py-5 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-95 ${editingId ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-white text-black hover:bg-brand-500 hover:text-white'}`}
                 >
-                  <Plus /> LİSTEYE EKLE
+                  {editingId ? <CheckCircle /> : <Plus />} 
+                  {editingId ? 'GÜNCELLE' : 'LİSTEYE EKLE'}
                 </button>
               </form>
             </div>
           </div>
 
-          {/* List Display */}
+          {/* List Display Side */}
           <div className="lg:col-span-8">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-32">
@@ -201,16 +254,29 @@ const Admin: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                   </div>
                 )}
                 {items.map((item) => (
-                  <div key={item.id} className="group relative rounded-3xl overflow-hidden border border-white/10 bg-dark-800 shadow-2xl transition-all hover:border-brand-500">
+                  <div 
+                    key={item.id} 
+                    className={`group relative rounded-3xl overflow-hidden border bg-dark-800 shadow-2xl transition-all duration-500 ${editingId === item.id ? 'border-brand-500 ring-2 ring-brand-500/20 scale-[0.98]' : 'border-white/10 hover:border-brand-500/50'}`}
+                  >
                     <div className="aspect-video relative overflow-hidden">
                        <img src={item.imageUrl} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-700" alt={item.title} />
                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                       <button 
-                        onClick={() => removeFromLocalList(item.id)}
-                        className="absolute top-4 right-4 p-3 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-all shadow-xl active:scale-90"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+                       <div className="absolute top-4 right-4 flex gap-2 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                         <button 
+                            onClick={() => startEditing(item)}
+                            className="p-3 bg-white/10 backdrop-blur-md hover:bg-brand-500 text-white rounded-xl transition-all shadow-xl active:scale-90"
+                            title="Düzenle"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => removeFromLocalList(item.id)}
+                            className="p-3 bg-white/10 backdrop-blur-md hover:bg-red-500 text-white rounded-xl transition-all shadow-xl active:scale-90"
+                            title="Sil"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                       </div>
                     </div>
                     <div className="p-6">
                       <p className="text-[9px] text-brand-500 uppercase font-black tracking-widest mb-1">{item.category}</p>
